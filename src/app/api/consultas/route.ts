@@ -1,19 +1,17 @@
 import { NextResponse } from 'next/server';
-import { dbConnect } from '@/lib/db';
 
 export async function GET() {
   try {
-    const db = await dbConnect();
-    
-    const consultas = await db
-      .collection('consultas')
-      .find({ ativo: { $ne: false } })
-      .sort({ dataHora: 1 })
-      .toArray();
+    const response = await fetch('/api/consultas');
+    const data = await response.json();
 
-    return NextResponse.json(consultas);
+    if (!response.ok) {
+      throw new Error(data.error || 'Erro ao buscar consultas');
+    }
+
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Erro ao buscar consultas:', error);
+    console.error('Erro:', error);
     return NextResponse.json(
       { error: 'Erro ao buscar consultas' },
       { status: 500 }
@@ -23,27 +21,22 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const db = await dbConnect();
     const data = await request.json();
-    
-    const novaConsulta = {
-      ...data,
-      dataHora: new Date(data.dataHora),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      ativo: true
-    };
+    const response = await fetch('/api/consultas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
 
-    const result = await db
-      .collection('consultas')
-      .insertOne(novaConsulta);
+    const result = await response.json();
 
-    return NextResponse.json(
-      { ...novaConsulta, _id: result.insertedId },
-      { status: 201 }
-    );
+    if (!response.ok) {
+      throw new Error(result.error || 'Erro ao criar consulta');
+    }
+
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
-    console.error('Erro ao criar consulta:', error);
+    console.error('Erro:', error);
     return NextResponse.json(
       { error: 'Erro ao criar consulta' },
       { status: 500 }
