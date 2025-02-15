@@ -6,6 +6,10 @@ if (!process.env.MONGODB_URI) {
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
+if (!MONGODB_URI.includes('PROD')) {
+  throw new Error('String de conexão não contém o banco PROD');
+}
+
 let cached = global.mongoose;
 
 if (!cached) {
@@ -20,6 +24,7 @@ async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      dbName: 'PROD'
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
