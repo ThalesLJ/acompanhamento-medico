@@ -25,7 +25,22 @@ async function connectToDatabase() {
   return { client, db };
 }
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Content-Type': 'application/json'
+};
+
 const handler: Handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers: corsHeaders,
+      body: ''
+    };
+  }
+
   if (!event.path) {
     return {
       statusCode: 400,
@@ -61,6 +76,7 @@ const handler: Handler = async (event) => {
 
       return {
         statusCode: 200,
+        headers: corsHeaders,
         body: JSON.stringify(medicamento)
       };
     }
@@ -76,10 +92,7 @@ const handler: Handler = async (event) => {
       if (!medicamento) {
         return {
           statusCode: 404,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          },
+          headers: corsHeaders,
           body: JSON.stringify({ error: 'Medicamento não encontrado' })
         };
       }
@@ -103,10 +116,7 @@ const handler: Handler = async (event) => {
       if (result.modifiedCount === 0) {
         return {
           statusCode: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          },
+          headers: corsHeaders,
           body: JSON.stringify({ error: 'Nenhuma alteração realizada' })
         };
       }
@@ -117,10 +127,7 @@ const handler: Handler = async (event) => {
 
       return {
         statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
+        headers: corsHeaders,
         body: JSON.stringify(updatedMedicamento)
       };
     }
@@ -133,10 +140,7 @@ const handler: Handler = async (event) => {
           if (!medicamento) {
             return {
               statusCode: 404,
-              headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-              },
+              headers: corsHeaders,
               body: JSON.stringify({ error: 'Medicamento não encontrado' })
             };
           }
@@ -149,19 +153,13 @@ const handler: Handler = async (event) => {
             )
             .then(result => ({
               statusCode: 200,
-              headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-              },
+              headers: corsHeaders,
               body: JSON.stringify(result.value)
             }));
         })
         .catch(error => ({
           statusCode: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          },
+          headers: corsHeaders,
           body: JSON.stringify({ 
             error: 'Erro interno do servidor',
             details: error.message 
@@ -171,16 +169,14 @@ const handler: Handler = async (event) => {
 
     return {
       statusCode: 405,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Método não permitido' })
     };
   } catch (error) {
     console.error('Erro:', error);
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: corsHeaders,
       body: JSON.stringify({ 
         error: 'Erro interno do servidor',
         details: error.message 

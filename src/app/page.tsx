@@ -45,11 +45,11 @@ export default function Agenda() {
       <ErrorMessage message={error} />
 
       <div className="overflow-hidden">
-        <div className="grid grid-cols-5 gap-4 p-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-700">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 p-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-700">
           <div>Data</div>
-          <div>Hora</div>
-          <div>Especialidade</div>
-          <div>Local</div>
+          <div className="hidden sm:block">Hora</div>
+          <div className="hidden md:block">Especialidade</div>
+          <div className="hidden md:block">Local</div>
           <div>Status</div>
         </div>
         <div className="divide-y divide-gray-200">
@@ -57,12 +57,14 @@ export default function Agenda() {
             <Link 
               href={`/consultas/${consulta._id}`} 
               key={consulta._id}
-              className="grid grid-cols-5 gap-4 p-4 hover:bg-gray-50 transition-colors duration-150"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 p-4 hover:bg-gray-50 transition-colors duration-150"
             >
               <div>{new Date(consulta.dataHora).toLocaleDateString()}</div>
-              <div>{new Date(consulta.dataHora).toLocaleTimeString()}</div>
-              <div>{consulta.especialidade}</div>
-              <div>{consulta.local}</div>
+              <div className="hidden sm:block">
+                {new Date(consulta.dataHora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
+              <div className="hidden md:block">{consulta.especialidade}</div>
+              <div className="hidden md:block">{consulta.local}</div>
               <div>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                   ${consulta.resultado ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>

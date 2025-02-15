@@ -21,7 +21,23 @@ async function connectToDatabase() {
   }
 }
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Content-Type': 'application/json'
+};
+
 const handler: Handler = async (event) => {
+  // Handle OPTIONS para preflight requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers: corsHeaders,
+      body: ''
+    };
+  }
+
   try {
     const { client, db } = await connectToDatabase();
     
@@ -35,10 +51,7 @@ const handler: Handler = async (event) => {
 
       return {
         statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
+        headers: corsHeaders,
         body: JSON.stringify(consultas)
       };
     }
@@ -60,26 +73,21 @@ const handler: Handler = async (event) => {
 
       return {
         statusCode: 201,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
+        headers: corsHeaders,
         body: JSON.stringify({ ...novaConsulta, _id: result.insertedId })
       };
     }
 
     return {
       statusCode: 405,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Método não permitido' })
     };
   } catch (error) {
     console.error('Erro:', error);
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: corsHeaders,
       body: JSON.stringify({ 
         error: 'Erro interno do servidor',
         details: error.message 
