@@ -11,7 +11,12 @@ export default function Agenda() {
   useEffect(() => {
     const fetchConsultas = async () => {
       try {
-        const response = await fetch('/api/consultas');
+        // Em desenvolvimento usa porta 8888, em produção usa /.netlify/functions/
+        const baseUrl = process.env.NEXT_PUBLIC_NETLIFY_DEV 
+          ? 'http://localhost:8888/api'
+          : '/.netlify/functions';
+        
+        const response = await fetch(`${baseUrl}/consultas`);
         if (!response.ok) {
           throw new Error('Erro ao carregar consultas');
         }
