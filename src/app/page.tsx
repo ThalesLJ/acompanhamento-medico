@@ -8,22 +8,23 @@ export default function Agenda() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const getBaseUrl = () => {
+    return process.env.NEXT_PUBLIC_NETLIFY_DEV 
+      ? 'http://localhost:8888/.netlify/functions'
+      : '/.netlify/functions';
+  };
+
   useEffect(() => {
     const fetchConsultas = async () => {
       try {
-        // Em desenvolvimento usa porta 8888, em produção usa /.netlify/functions/
-        const baseUrl = process.env.NEXT_PUBLIC_NETLIFY_DEV 
-          ? 'http://localhost:8888/api'
-          : '/.netlify/functions';
-        
-        const response = await fetch(`${baseUrl}/consultas`);
+        const response = await fetch(`${getBaseUrl()}/consultas`);
         if (!response.ok) {
           throw new Error('Erro ao carregar consultas');
         }
         const data = await response.json();
         setConsultas(data);
       } catch (error) {
-        setError(error.message);
+        setError(error instanceof Error ? error.message : 'Erro ao carregar consultas');
       } finally {
         setLoading(false);
       }

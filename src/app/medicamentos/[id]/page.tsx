@@ -18,26 +18,33 @@ export default function EditarMedicamento() {
     status: 'ativo'
   });
 
-  const fetchMedicamento = async (id: string) => {
-    try {
-      const response = await fetch(`/api/medicamentos/${id}`);
-      if (!response.ok) throw new Error('Erro ao buscar medicamento');
-      const data = await response.json();
-      
-      setFormData({
-        ...data,
-        inicio: data.inicio ? new Date(data.inicio).toISOString().split('T')[0] : '',
-        fim: data.fim ? new Date(data.fim).toISOString().split('T')[0] : '',
-        horarios: data.horarios?.length > 0 ? data.horarios : ['']
-      });
-    } catch (error) {
-      setError(error.message);
-    }
+  const getBaseUrl = () => {
+    return process.env.NEXT_PUBLIC_NETLIFY_DEV 
+      ? 'http://localhost:8888/.netlify/functions'
+      : '/.netlify/functions';
   };
 
   useEffect(() => {
+    const fetchMedicamento = async () => {
+      try {
+        const response = await fetch(`${getBaseUrl()}/medicamento/${params.id}`);
+        if (!response.ok) {
+          throw new Error('Erro ao buscar medicamento');
+        }
+        const data = await response.json();
+        setFormData({
+          ...data,
+          inicio: data.inicio ? new Date(data.inicio).toISOString().slice(0, 10) : '',
+          fim: data.fim ? new Date(data.fim).toISOString().slice(0, 10) : '',
+          horarios: data.horarios?.length > 0 ? data.horarios : ['']
+        });
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Erro ao buscar medicamento');
+      }
+    };
+
     if (params.id) {
-      fetchMedicamento(params.id as string);
+      fetchMedicamento();
     }
   }, [params.id]);
 
@@ -47,18 +54,21 @@ export default function EditarMedicamento() {
     setError('');
 
     try {
-      const response = await fetch(`/api/medicamentos/${params.id}`, {
+      const response = await fetch(`${getBaseUrl()}/medicamento/${params.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) throw new Error('Erro ao atualizar medicamento');
-      
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar medicamento');
+      }
+
       router.push('/medicamentos');
-      router.refresh();
     } catch (error) {
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'Erro ao atualizar medicamento');
     } finally {
       setLoading(false);
     }
@@ -69,16 +79,17 @@ export default function EditarMedicamento() {
     
     setLoading(true);
     try {
-      const response = await fetch(`/api/medicamentos/${params.id}`, {
+      const response = await fetch(`${getBaseUrl()}/medicamento/${params.id}`, {
         method: 'DELETE',
       });
 
-      if (!response.ok) throw new Error('Erro ao excluir medicamento');
-      
+      if (!response.ok) {
+        throw new Error('Erro ao excluir medicamento');
+      }
+
       router.push('/medicamentos');
-      router.refresh();
     } catch (error) {
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'Erro ao excluir medicamento');
     } finally {
       setLoading(false);
     }

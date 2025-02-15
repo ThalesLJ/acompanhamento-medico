@@ -2,7 +2,6 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Consulta } from '@/models/schemas';
 
 export default function DetalheConsulta() {
   const params = useParams();
@@ -17,9 +16,15 @@ export default function DetalheConsulta() {
     resultado: ''
   });
 
+  const getBaseUrl = () => {
+    return process.env.NEXT_PUBLIC_NETLIFY_DEV 
+      ? 'http://localhost:8888/.netlify/functions'
+      : '/.netlify/functions';
+  };
+
   const fetchConsulta = async (consultaId: string) => {
     try {
-      const response = await fetch(`/api/consultas/${consultaId}`);
+      const response = await fetch(`${getBaseUrl()}/consulta/${consultaId}`);
       if (!response.ok) {
         throw new Error('Erro ao buscar consulta');
       }
@@ -46,7 +51,7 @@ export default function DetalheConsulta() {
     setError('');
 
     try {
-      const response = await fetch(`/api/consultas/${params.id}`, {
+      const response = await fetch(`${getBaseUrl()}/consulta/${params.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +77,7 @@ export default function DetalheConsulta() {
     
     setLoading(true);
     try {
-      const response = await fetch(`/api/consultas/${params.id}`, {
+      const response = await fetch(`${getBaseUrl()}/consulta/${params.id}`, {
         method: 'DELETE',
       });
 

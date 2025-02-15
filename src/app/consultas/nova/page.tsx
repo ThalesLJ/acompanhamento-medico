@@ -65,7 +65,6 @@ export default function NovaConsulta() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={formData.dataHora}
                 onChange={(e) => setFormData({...formData, dataHora: e.target.value})}
-                required
               />
             </div>
 
@@ -78,7 +77,6 @@ export default function NovaConsulta() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={formData.especialidade}
                 onChange={(e) => setFormData({...formData, especialidade: e.target.value})}
-                required
               />
             </div>
           </div>
@@ -92,7 +90,6 @@ export default function NovaConsulta() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.local}
               onChange={(e) => setFormData({...formData, local: e.target.value})}
-              required
             />
           </div>
 
