@@ -43,7 +43,7 @@ export default function Medicamentos() {
         <h1 className="text-2xl font-bold text-blue-600">Medicamentos</h1>
         <Link href="/medicamentos/novo">
           <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-            Novo Medicamento
+            Novo
           </button>
         </Link>
       </div>
@@ -51,25 +51,25 @@ export default function Medicamentos() {
       <ErrorMessage message={error} />
 
       <div className="overflow-hidden">
-        <div className="grid grid-cols-3 md:grid-cols-5 gap-4 p-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-700">
+        <div className="grid grid-cols-3 max-[500px]:grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-700">
           <div>Nome</div>
           <div className="hidden md:block">Dosagem</div>
           <div className="hidden md:block">Frequência</div>
           <div>Horários</div>
-          <div>Status</div>
+          <div className="hidden max-[500px]:hidden min-[501px]:block">Status</div>
         </div>
         <div className="divide-y divide-gray-200">
           {medicamentos.map((medicamento: any) => (
             <Link 
               href={`/medicamentos/${medicamento._id}`}
               key={medicamento._id}
-              className="grid grid-cols-3 md:grid-cols-5 gap-4 p-4 hover:bg-gray-50 transition-colors duration-150 text-blue-600"
+              className="grid grid-cols-3 max-[500px]:grid-cols-2 md:grid-cols-5 gap-4 p-4 hover:bg-gray-50 transition-colors duration-150 text-blue-600"
             >
               <div className="truncate">{medicamento.nome}</div>
               <div className="hidden md:block truncate">{medicamento.dosagem}</div>
               <div className="hidden md:block truncate">{medicamento.frequencia}</div>
               <div className="truncate">{formatHorarios(medicamento.horarios)}</div>
-              <div>
+              <div className="hidden max-[500px]:hidden min-[501px]:block">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                   ${medicamento.status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                   {medicamento.status}
