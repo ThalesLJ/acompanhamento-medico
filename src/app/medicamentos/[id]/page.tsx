@@ -18,16 +18,10 @@ export default function EditarMedicamento() {
     status: 'ativo'
   });
 
-  const getBaseUrl = () => {
-    return process.env.NEXT_PUBLIC_NETLIFY_DEV 
-      ? 'http://localhost:8888/.netlify/functions'
-      : '/.netlify/functions';
-  };
-
   useEffect(() => {
     const fetchMedicamento = async () => {
       try {
-        const response = await fetch(`${getBaseUrl()}/medicamento/${params.id}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medicamento/${params.id}`);
         if (!response.ok) {
           throw new Error('Erro ao buscar medicamento');
         }
@@ -54,7 +48,7 @@ export default function EditarMedicamento() {
     setError('');
 
     try {
-      const response = await fetch(`${getBaseUrl()}/medicamento/${params.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medicamento/${params.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +73,7 @@ export default function EditarMedicamento() {
     
     setLoading(true);
     try {
-      const response = await fetch(`${getBaseUrl()}/medicamento/${params.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medicamento/${params.id}`, {
         method: 'DELETE',
       });
 

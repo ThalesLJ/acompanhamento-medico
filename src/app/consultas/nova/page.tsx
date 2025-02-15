@@ -19,7 +19,7 @@ export default function NovaConsulta() {
     setError('');
 
     try {
-      const response = await fetch('/api/consultas', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/consultas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

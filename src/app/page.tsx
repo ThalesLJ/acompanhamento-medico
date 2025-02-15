@@ -8,16 +8,10 @@ export default function Agenda() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const getBaseUrl = () => {
-    return process.env.NEXT_PUBLIC_NETLIFY_DEV 
-      ? 'http://localhost:8888/.netlify/functions'
-      : '/.netlify/functions';
-  };
-
   useEffect(() => {
     const fetchConsultas = async () => {
       try {
-        const response = await fetch(`${getBaseUrl()}/consultas`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/consultas`);
         if (!response.ok) {
           throw new Error('Erro ao carregar consultas');
         }

@@ -23,7 +23,7 @@ export default function NovoMedicamento() {
     setError('');
     
     try {
-      const response = await fetch('/api/medicamentos', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medicamentos`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

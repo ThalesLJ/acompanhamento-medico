@@ -8,16 +8,10 @@ export default function Medicamentos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const getBaseUrl = () => {
-    return process.env.NEXT_PUBLIC_NETLIFY_DEV 
-      ? 'http://localhost:8888/.netlify/functions'
-      : '/.netlify/functions';
-  };
-
   useEffect(() => {
     const fetchMedicamentos = async () => {
       try {
-        const response = await fetch(`${getBaseUrl()}/medicamentos`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medicamentos`);
         if (!response.ok) {
           throw new Error('Erro ao carregar medicamentos');
         }
