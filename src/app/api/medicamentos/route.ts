@@ -1,19 +1,22 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import { Medicamento } from '@/models/schemas';
+import mongoose from 'mongoose';
+
+const MONGODB_URI = process.env.MONGODB_URI;
 
 export async function GET() {
+  if (!mongoose.connection.readyState) {
+    await mongoose.connect(MONGODB_URI);
+  }
+
   try {
-    await connectDB();
-    
-    const medicamentos = await Medicamento.find({ ativo: { $ne: false } })
+    const medicamentos = await mongoose.connection.db
+      .collection('medicamentos')
+      .find({ ativo: { $ne: false } })
       .sort({ createdAt: -1 })
-      .lean()
-      .exec();
-    
+      .toArray();
+
     return NextResponse.json(medicamentos);
   } catch (error) {
-    console.error('Erro ao buscar medicamentos:', error);
     return NextResponse.json(
       { error: 'Erro ao buscar medicamentos' },
       { status: 500 }
@@ -22,16 +25,29 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!mongoose.connection.readyState) {
+    await mongoose.connect(MONGODB_URI);
+  }
+
   try {
-    const body = await request.json();
+    const data = await request.json();
     
-    await connectDB();
-    
-    const medicamento = await Medicamento.create(body);
-    
-    return NextResponse.json(medicamento);
+    const novoMedicamento = {
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ativo: true
+    };
+
+    const result = await mongoose.connection.db
+      .collection('medicamentos')
+      .insertOne(novoMedicamento);
+
+    return NextResponse.json(
+      { ...novoMedicamento, _id: result.insertedId },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error('Erro ao criar medicamento:', error);
     return NextResponse.json(
       { error: 'Erro ao criar medicamento' },
       { status: 500 }

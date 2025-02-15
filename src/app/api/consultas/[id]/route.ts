@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import { Consulta } from '@/models/schemas';
 import mongoose from 'mongoose';
+
+const MONGODB_URI = process.env.MONGODB_URI;
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  if (!mongoose.connection.readyState) {
+    await mongoose.connect(MONGODB_URI);
+  }
+
   try {
     if (!params.id || !mongoose.Types.ObjectId.isValid(params.id)) {
       return NextResponse.json(
@@ -15,12 +19,10 @@ export async function GET(
       );
     }
 
-    await connectDB();
-    
-    const consulta = await Consulta.findById(params.id)
-      .lean()
-      .exec();
-    
+    const consulta = await mongoose.connection.db
+      .collection('consultas')
+      .findOne({ _id: new mongoose.Types.ObjectId(params.id) });
+
     if (!consulta) {
       return NextResponse.json(
         { error: 'Consulta não encontrada' },
@@ -32,18 +34,23 @@ export async function GET(
   } catch (error) {
     console.error('Erro ao buscar consulta:', error);
     return NextResponse.json(
-      { error: 'Erro ao buscar consulta', details: error instanceof Error ? error.message : 'Erro desconhecido' },
+      { error: 'Erro ao buscar consulta' },
       { status: 500 }
     );
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  if (!mongoose.connection.readyState) {
+    await mongoose.connect(MONGODB_URI);
+  }
+
   try {
-    await connectDB();
     const data = await request.json();
-    
-    // Validação dos campos obrigatórios
+
     if (!data.dataHora || !data.especialidade || !data.medico || !data.local) {
       return NextResponse.json(
         { error: 'Campos obrigatórios não preenchidos' },
@@ -51,30 +58,31 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       );
     }
 
-    // Formatação da data
     const consultaAtualizada = {
       ...data,
-      dataHora: new Date(data.dataHora)
+      dataHora: new Date(data.dataHora),
+      updatedAt: new Date()
     };
 
-    const consulta = await Consulta.findByIdAndUpdate(
-      params.id,
-      consultaAtualizada,
-      { new: true }
-    );
+    const result = await mongoose.connection.db
+      .collection('consultas')
+      .findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(params.id) },
+        { $set: consultaAtualizada },
+        { returnDocument: 'after' }
+      );
 
-    if (!consulta) {
+    if (!result.value) {
       return NextResponse.json(
         { error: 'Consulta não encontrada' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(consulta);
+    return NextResponse.json(result.value);
   } catch (error) {
-    console.error('Erro ao atualizar consulta:', error);
     return NextResponse.json(
-      { error: 'Erro ao atualizar consulta: ' + error.message },
+      { error: 'Erro ao atualizar consulta' },
       { status: 500 }
     );
   }
@@ -84,23 +92,27 @@ export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  if (!mongoose.connection.readyState) {
+    await mongoose.connect(MONGODB_URI);
+  }
+
   try {
-    await connectDB();
-    
-    const consulta = await Consulta.findByIdAndUpdate(
-      params.id,
-      { ativo: false },
-      { new: true }
-    );
-    
-    if (!consulta) {
+    const result = await mongoose.connection.db
+      .collection('consultas')
+      .findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(params.id) },
+        { $set: { ativo: false, updatedAt: new Date() } },
+        { returnDocument: 'after' }
+      );
+
+    if (!result.value) {
       return NextResponse.json(
         { error: 'Consulta não encontrada' },
         { status: 404 }
       );
     }
-    
-    return NextResponse.json(consulta);
+
+    return NextResponse.json(result.value);
   } catch (error) {
     return NextResponse.json(
       { error: 'Erro ao excluir consulta' },

@@ -1,22 +1,28 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import { Medicamento } from '@/models/schemas';
+import mongoose from 'mongoose';
+
+const MONGODB_URI = process.env.MONGODB_URI;
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  if (!mongoose.connection.readyState) {
+    await mongoose.connect(MONGODB_URI);
+  }
+
   try {
-    await connectDB();
-    const medicamento = await Medicamento.findById(params.id);
-    
+    const medicamento = await mongoose.connection.db
+      .collection('medicamentos')
+      .findOne({ _id: new mongoose.Types.ObjectId(params.id) });
+
     if (!medicamento) {
       return NextResponse.json(
         { error: 'Medicamento não encontrado' },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(medicamento);
   } catch (error) {
     return NextResponse.json(
@@ -30,24 +36,30 @@ export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  if (!mongoose.connection.readyState) {
+    await mongoose.connect(MONGODB_URI);
+  }
+
   try {
-    await connectDB();
     const data = await request.json();
-    
-    const medicamento = await Medicamento.findByIdAndUpdate(
-      params.id,
-      data,
-      { new: true }
-    );
-    
-    if (!medicamento) {
+    data.updatedAt = new Date();
+
+    const result = await mongoose.connection.db
+      .collection('medicamentos')
+      .findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(params.id) },
+        { $set: data },
+        { returnDocument: 'after' }
+      );
+
+    if (!result.value) {
       return NextResponse.json(
         { error: 'Medicamento não encontrado' },
         { status: 404 }
       );
     }
-    
-    return NextResponse.json(medicamento);
+
+    return NextResponse.json(result.value);
   } catch (error) {
     return NextResponse.json(
       { error: 'Erro ao atualizar medicamento' },
@@ -60,23 +72,27 @@ export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  if (!mongoose.connection.readyState) {
+    await mongoose.connect(MONGODB_URI);
+  }
+
   try {
-    await connectDB();
-    
-    const medicamento = await Medicamento.findByIdAndUpdate(
-      params.id,
-      { ativo: false },
-      { new: true }
-    );
-    
-    if (!medicamento) {
+    const result = await mongoose.connection.db
+      .collection('medicamentos')
+      .findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(params.id) },
+        { $set: { ativo: false, updatedAt: new Date() } },
+        { returnDocument: 'after' }
+      );
+
+    if (!result.value) {
       return NextResponse.json(
         { error: 'Medicamento não encontrado' },
         { status: 404 }
       );
     }
-    
-    return NextResponse.json(medicamento);
+
+    return NextResponse.json(result.value);
   } catch (error) {
     return NextResponse.json(
       { error: 'Erro ao excluir medicamento' },

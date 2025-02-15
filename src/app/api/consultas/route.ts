@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import { Consulta } from '@/models/schemas';
+import mongoose from 'mongoose';
+
+const MONGODB_URI = process.env.MONGODB_URI;
 
 export async function GET() {
+  if (!mongoose.connection.readyState) {
+    await mongoose.connect(MONGODB_URI);
+  }
+
   try {
-    await connectDB();
-    const consultas = await Consulta.find({ ativo: { $ne: false } })
-      .sort({ dataHora: 1 });
+    const consultas = await mongoose.connection.db
+      .collection('consultas')
+      .find({ ativo: { $ne: false } })
+      .sort({ dataHora: 1 })
+      .toArray();
+
     return NextResponse.json(consultas);
   } catch (error) {
     console.error('Erro ao buscar consultas:', error);
@@ -18,22 +26,33 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!mongoose.connection.readyState) {
+    await mongoose.connect(MONGODB_URI);
+  }
+
   try {
-    await connectDB();
     const data = await request.json();
     
-    // Formatação da data
     const novaConsulta = {
       ...data,
-      dataHora: new Date(data.dataHora)
+      dataHora: new Date(data.dataHora),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ativo: true
     };
 
-    const consulta = await Consulta.create(novaConsulta);
-    return NextResponse.json(consulta, { status: 201 });
+    const result = await mongoose.connection.db
+      .collection('consultas')
+      .insertOne(novaConsulta);
+
+    return NextResponse.json(
+      { ...novaConsulta, _id: result.insertedId }, 
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Erro ao criar consulta:', error);
     return NextResponse.json(
-      { error: 'Erro ao criar consulta: ' + error.message },
+      { error: 'Erro ao criar consulta' },
       { status: 500 }
     );
   }
