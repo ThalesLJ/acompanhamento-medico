@@ -1,30 +1,17 @@
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  if (!mongoose.connection.readyState) {
-    await mongoose.connect(MONGODB_URI);
-  }
-
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
-    const medicamento = await mongoose.connection.db
-      .collection('medicamentos')
-      .findOne({ _id: new mongoose.Types.ObjectId(params.id) });
+    const response = await fetch(`/api/medicamento/${params.id}`);
+    const data = await response.json();
 
-    if (!medicamento) {
-      return NextResponse.json(
-        { error: 'Medicamento não encontrado' },
-        { status: 404 }
-      );
+    if (!response.ok) {
+      throw new Error(data.error || 'Erro ao buscar medicamento');
     }
 
-    return NextResponse.json(medicamento);
+    return NextResponse.json(data);
   } catch (error) {
+    console.error('Erro:', error);
     return NextResponse.json(
       { error: 'Erro ao buscar medicamento' },
       { status: 500 }
@@ -32,35 +19,24 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  if (!mongoose.connection.readyState) {
-    await mongoose.connect(MONGODB_URI);
-  }
-
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const data = await request.json();
-    data.updatedAt = new Date();
+    const response = await fetch(`/api/medicamento/${params.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
 
-    const result = await mongoose.connection.db
-      .collection('medicamentos')
-      .findOneAndUpdate(
-        { _id: new mongoose.Types.ObjectId(params.id) },
-        { $set: data },
-        { returnDocument: 'after' }
-      );
+    const result = await response.json();
 
-    if (!result.value) {
-      return NextResponse.json(
-        { error: 'Medicamento não encontrado' },
-        { status: 404 }
-      );
+    if (!response.ok) {
+      throw new Error(result.error || 'Erro ao atualizar medicamento');
     }
 
-    return NextResponse.json(result.value);
+    return NextResponse.json(result);
   } catch (error) {
+    console.error('Erro:', error);
     return NextResponse.json(
       { error: 'Erro ao atualizar medicamento' },
       { status: 500 }
@@ -68,32 +44,21 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  if (!mongoose.connection.readyState) {
-    await mongoose.connect(MONGODB_URI);
-  }
-
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
-    const result = await mongoose.connection.db
-      .collection('medicamentos')
-      .findOneAndUpdate(
-        { _id: new mongoose.Types.ObjectId(params.id) },
-        { $set: { ativo: false, updatedAt: new Date() } },
-        { returnDocument: 'after' }
-      );
+    const response = await fetch(`/api/medicamento/${params.id}`, {
+      method: 'DELETE'
+    });
 
-    if (!result.value) {
-      return NextResponse.json(
-        { error: 'Medicamento não encontrado' },
-        { status: 404 }
-      );
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Erro ao excluir medicamento');
     }
 
-    return NextResponse.json(result.value);
+    return NextResponse.json(result);
   } catch (error) {
+    console.error('Erro:', error);
     return NextResponse.json(
       { error: 'Erro ao excluir medicamento' },
       { status: 500 }

@@ -1,15 +1,11 @@
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-
-const MONGODB_URI = process.env.MONGODB_URI;
+import { dbConnect } from '@/lib/db';
 
 export async function GET() {
-  if (!mongoose.connection.readyState) {
-    await mongoose.connect(MONGODB_URI);
-  }
-
   try {
-    const consultas = await mongoose.connection.db
+    const db = await dbConnect();
+    
+    const consultas = await db
       .collection('consultas')
       .find({ ativo: { $ne: false } })
       .sort({ dataHora: 1 })
@@ -26,11 +22,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!mongoose.connection.readyState) {
-    await mongoose.connect(MONGODB_URI);
-  }
-
   try {
+    const db = await dbConnect();
     const data = await request.json();
     
     const novaConsulta = {
@@ -41,12 +34,12 @@ export async function POST(request: Request) {
       ativo: true
     };
 
-    const result = await mongoose.connection.db
+    const result = await db
       .collection('consultas')
       .insertOne(novaConsulta);
 
     return NextResponse.json(
-      { ...novaConsulta, _id: result.insertedId }, 
+      { ...novaConsulta, _id: result.insertedId },
       { status: 201 }
     );
   } catch (error) {
