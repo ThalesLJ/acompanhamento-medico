@@ -6,17 +6,10 @@ import { useEffect, useState } from 'react';
 export default function EditarMedicamento() {
   const params = useParams();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
-    nome: '',
-    dosagem: '',
-    frequencia: '',
-    horarios: [''],
-    inicio: '',
-    fim: '',
-    status: 'ativo'
-  });
+  const [formData, setFormData] = useState(null);
 
   useEffect(() => {
     const fetchMedicamento = async () => {
@@ -34,6 +27,8 @@ export default function EditarMedicamento() {
         });
       } catch (error) {
         setError(error instanceof Error ? error.message : 'Erro ao buscar medicamento');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -42,9 +37,17 @@ export default function EditarMedicamento() {
     }
   }, [params.id]);
 
+  if (loading) {
+    return <div className="text-center p-4 text-blue-600">Carregando...</div>;
+  }
+
+  if (!formData) {
+    return <div className="text-center p-4 text-red-600">Medicamento não encontrado</div>;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     setError('');
 
     try {
@@ -64,14 +67,14 @@ export default function EditarMedicamento() {
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Erro ao atualizar medicamento');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
     if (!confirm('Tem certeza que deseja excluir este medicamento?')) return;
     
-    setLoading(true);
+    setSubmitting(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medicamento/${params.id}`, {
         method: 'DELETE',
@@ -85,7 +88,7 @@ export default function EditarMedicamento() {
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Erro ao excluir medicamento');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -219,7 +222,7 @@ export default function EditarMedicamento() {
               type="button"
               onClick={handleDelete}
               className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-              disabled={loading}
+              disabled={submitting}
             >
               Excluir
             </button>
@@ -229,16 +232,16 @@ export default function EditarMedicamento() {
                 type="button"
                 onClick={() => router.back()}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                disabled={loading}
+                disabled={submitting}
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                disabled={loading}
+                disabled={submitting}
               >
-                {loading ? 'Salvando...' : 'Salvar'}
+                {submitting ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
           </div>

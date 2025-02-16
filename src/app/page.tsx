@@ -27,6 +27,20 @@ export default function Agenda() {
     fetchConsultas();
   }, []);
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    // Ajusta o fuso horário para UTC-3 (Brasil)
+    date.setHours(date.getHours() + 3);
+    return date.toLocaleDateString();
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    // Ajusta o fuso horário para UTC-3 (Brasil)
+    date.setHours(date.getHours() + 3);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   if (loading) {
     return <div className="text-center p-4 text-blue-600">Carregando...</div>;
   }
@@ -59,8 +73,8 @@ export default function Agenda() {
               key={consulta._id}
               className="grid grid-cols-3 max-[500px]:grid-cols-2 md:grid-cols-5 gap-4 p-4 hover:bg-gray-50 transition-colors duration-150"
             >
-              <div>{new Date(consulta.dataHora).toLocaleDateString()}</div>
-              <div>{new Date(consulta.dataHora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+              <div>{formatDate(consulta.dataHora)}</div>
+              <div>{formatTime(consulta.dataHora)}</div>
               <div className="hidden md:block">{consulta.especialidade}</div>
               <div className="hidden md:block">{consulta.local}</div>
               <div className="hidden max-[500px]:hidden min-[501px]:block">
