@@ -1,29 +1,7 @@
 import { Handler } from '@netlify/functions';
 import { MongoClient, ObjectId } from 'mongodb';
 
-let cachedClient: MongoClient | null = null;
-let cachedDb: any = null;
-
-async function connectToDatabase() {
-  if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb };
-  }
-
-  const client = new MongoClient(process.env.MONGODB_URI);
-  
-  if (!cachedClient) {
-    cachedClient = client;
-  }
-
-  await client.connect();
-  const db = client.db();
-  
-  if (!cachedDb) {
-    cachedDb = db;
-  }
-
-  return { client, db };
-}
+const client = new MongoClient(process.env.MONGODB_URI);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,6 +22,7 @@ const handler: Handler = async (event) => {
   if (!event.path) {
     return {
       statusCode: 400,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'ID não fornecido' })
     };
   }
@@ -53,12 +32,14 @@ const handler: Handler = async (event) => {
   if (!id || !ObjectId.isValid(id)) {
     return {
       statusCode: 400,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'ID inválido' })
     };
   }
 
   try {
-    const { db } = await connectToDatabase();
+    await client.connect();
+    const db = client.db();
     const collection = db.collection('medicamentos');
 
     // GET /api/medicamento/{id}
@@ -113,37 +94,27 @@ const handler: Handler = async (event) => {
 
     // DELETE /api/medicamentos/[id]
     if (event.httpMethod === 'DELETE') {
-      return collection
-        .findOne({ _id: new ObjectId(id) })
-        .then(medicamento => {
-          if (!medicamento) {
-            return {
-              statusCode: 404,
-              headers: corsHeaders,
-              body: JSON.stringify({ error: 'Medicamento não encontrado' })
-            };
-          }
-
-          return collection
-            .findOneAndUpdate(
-              { _id: new ObjectId(id) },
-              { $set: { ativo: false, updatedAt: new Date() } },
-              { returnDocument: 'after' }
-            )
-            .then(result => ({
-              statusCode: 200,
-              headers: corsHeaders,
-              body: JSON.stringify(result.value)
-            }));
-        })
-        .catch(error => ({
-          statusCode: 500,
+      const medicamento = await collection.findOne({ _id: new ObjectId(id) });
+      
+      if (!medicamento) {
+        return {
+          statusCode: 404,
           headers: corsHeaders,
-          body: JSON.stringify({ 
-            error: 'Erro interno do servidor',
-            details: error.message 
-          })
-        }));
+          body: JSON.stringify({ error: 'Medicamento não encontrado' })
+        };
+      }
+
+      const result = await collection.findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: { ativo: false, updatedAt: new Date() } },
+        { returnDocument: 'after' }
+      );
+
+      return {
+        statusCode: 200,
+        headers: corsHeaders,
+        body: JSON.stringify(result.value)
+      };
     }
 
     return {
@@ -158,8 +129,6 @@ const handler: Handler = async (event) => {
       headers: corsHeaders,
       body: JSON.stringify({ error: 'Erro interno do servidor' })
     };
-  } finally {
-    await cachedClient?.close();
   }
 };
 
