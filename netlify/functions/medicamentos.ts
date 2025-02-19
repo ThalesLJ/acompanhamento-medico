@@ -10,6 +10,19 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
+interface Medicamento {
+  nome: string;
+  dosagem: string;
+  frequencia: string;
+  horarios: string[];
+  inicio?: Date | null;
+  fim?: Date | null;
+  observacoes?: string;
+  ativo: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -41,13 +54,17 @@ const handler: Handler = async (event) => {
     // POST /api/medicamentos
     if (event.httpMethod === 'POST' && event.body) {
       const data = JSON.parse(event.body);
-      const novoMedicamento = {
-        ...data,
+      const novoMedicamento: Medicamento = {
+        nome: data.nome,
+        dosagem: data.dosagem,
+        frequencia: data.frequencia,
+        horarios: data.horarios || [],
         inicio: data.inicio ? new Date(data.inicio) : null,
         fim: data.fim ? new Date(data.fim) : null,
+        observacoes: data.observacoes || '',
+        ativo: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
-        ativo: true
+        updatedAt: new Date()
       };
 
       const result = await collection.insertOne(novoMedicamento);

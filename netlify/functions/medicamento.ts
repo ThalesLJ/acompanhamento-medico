@@ -61,15 +61,14 @@ const handler: Handler = async (event) => {
     const { db } = await connectToDatabase();
     const collection = db.collection('medicamentos');
 
-    // GET /api/medicamentos/[id]
+    // GET /api/medicamento/{id}
     if (event.httpMethod === 'GET') {
-      const medicamento = await collection.findOne({ 
-        _id: new ObjectId(id)
-      });
-
+      const medicamento = await collection.findOne({ _id: new ObjectId(id) });
+      
       if (!medicamento) {
         return {
           statusCode: 404,
+          headers: corsHeaders,
           body: JSON.stringify({ error: 'Medicamento não encontrado' })
         };
       }
@@ -81,15 +80,23 @@ const handler: Handler = async (event) => {
       };
     }
 
-    // PUT /api/medicamentos/[id]
+    // PUT /api/medicamento/{id}
     if (event.httpMethod === 'PUT' && event.body) {
       const data = JSON.parse(event.body);
-      
-      const medicamento = await collection.findOne({ 
-        _id: new ObjectId(id) 
-      });
+      const updateData = {
+        ...data,
+        inicio: data.inicio ? new Date(data.inicio) : null,
+        fim: data.fim ? new Date(data.fim) : null,
+        observacoes: data.observacoes || '',
+        updatedAt: new Date()
+      };
 
-      if (!medicamento) {
+      const result = await collection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updateData }
+      );
+
+      if (result.matchedCount === 0) {
         return {
           statusCode: 404,
           headers: corsHeaders,
@@ -97,38 +104,10 @@ const handler: Handler = async (event) => {
         };
       }
 
-      // Remove o _id do objeto antes do update
-      const { _id, ...updateData } = data;
-
-      const result = await collection.updateOne(
-        { _id: new ObjectId(id) },
-        {
-          $set: {
-            ...updateData,
-            inicio: data.inicio ? new Date(data.inicio) : null,
-            fim: data.fim ? new Date(data.fim) : null,
-            ativo: true,
-            updatedAt: new Date()
-          }
-        }
-      );
-
-      if (result.modifiedCount === 0) {
-        return {
-          statusCode: 400,
-          headers: corsHeaders,
-          body: JSON.stringify({ error: 'Nenhuma alteração realizada' })
-        };
-      }
-
-      const updatedMedicamento = await collection.findOne({ 
-        _id: new ObjectId(id) 
-      });
-
       return {
         statusCode: 200,
         headers: corsHeaders,
-        body: JSON.stringify(updatedMedicamento)
+        body: JSON.stringify({ ...updateData, _id: id })
       };
     }
 
@@ -177,11 +156,10 @@ const handler: Handler = async (event) => {
     return {
       statusCode: 500,
       headers: corsHeaders,
-      body: JSON.stringify({ 
-        error: 'Erro interno do servidor',
-        details: error.message 
-      })
+      body: JSON.stringify({ error: 'Erro interno do servidor' })
     };
+  } finally {
+    await cachedClient?.close();
   }
 };
 
