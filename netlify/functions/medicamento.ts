@@ -65,19 +65,19 @@ const handler: Handler = async (event) => {
     if (event.httpMethod === 'PUT' && event.body) {
       const data = JSON.parse(event.body);
       const updateData = {
-        ...data,
+        nome: data.nome,
+        dosagem: data.dosagem,
+        frequencia: data.frequencia,
+        horarios: data.horarios || [],
         inicio: data.inicio ? new Date(data.inicio) : null,
         fim: data.fim ? new Date(data.fim) : null,
         observacoes: data.observacoes || '',
         updatedAt: new Date()
       };
 
-      const result = await collection.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: updateData }
-      );
-
-      if (result.matchedCount === 0) {
+      const medicamento = await collection.findOne({ _id: new ObjectId(id) });
+      
+      if (!medicamento) {
         return {
           statusCode: 404,
           headers: corsHeaders,
@@ -85,10 +85,17 @@ const handler: Handler = async (event) => {
         };
       }
 
+      await collection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updateData }
+      );
+
+      const medicamentoAtualizado = { ...medicamento, ...updateData, _id: id };
+
       return {
         statusCode: 200,
         headers: corsHeaders,
-        body: JSON.stringify({ ...updateData, _id: id })
+        body: JSON.stringify(medicamentoAtualizado)
       };
     }
 
@@ -104,16 +111,21 @@ const handler: Handler = async (event) => {
         };
       }
 
-      const result = await collection.findOneAndUpdate(
+      await collection.updateOne(
         { _id: new ObjectId(id) },
-        { $set: { ativo: false, updatedAt: new Date() } },
-        { returnDocument: 'after' }
+        { $set: { ativo: false, updatedAt: new Date() } }
       );
+
+      const medicamentoAtualizado = { 
+        ...medicamento, 
+        ativo: false, 
+        updatedAt: new Date() 
+      };
 
       return {
         statusCode: 200,
         headers: corsHeaders,
-        body: JSON.stringify(result.value)
+        body: JSON.stringify(medicamentoAtualizado)
       };
     }
 
